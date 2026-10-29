@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     database_url: str = ""
 
+    # Operator dashboard: shared key for REST (X-Operator-Key) and WebSocket (?token=).
+    # Empty means the operator API refuses every request (fail closed).
+    dashboard_api_key: str = ""
+    # Comma-separated origins allowed to call the API from a browser.
+    dashboard_allowed_origins: str = "http://localhost:8501"
+
+    def allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.dashboard_allowed_origins.split(",") if origin.strip()]
+
 
 def get_settings() -> Settings:
     return Settings()

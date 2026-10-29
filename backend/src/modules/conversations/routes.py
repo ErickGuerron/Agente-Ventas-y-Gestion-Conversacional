@@ -18,9 +18,13 @@ from modules.channels.routes import get_telegram_service
 from modules.channels.telegram_service import TelegramChannelService
 from modules.conversations.repository import ConversationRepository
 from shared.database.session import get_db_session
+from shared.security.operator_auth import authorize_operator_websocket, require_operator
 from shared.websocket.manager import connection_manager
 
-router = APIRouter()
+# HTTP routes require the operator header. The WebSocket has its own router because router-level
+# HTTP dependencies also apply to WebSocket handshakes, which carry the key as ?token= instead.
+router = APIRouter(dependencies=[Depends(require_operator)])
+websocket_router = APIRouter()
 
 
 class TransitionRequest(BaseModel):
@@ -204,6 +208,13 @@ async def operator_reply(
     conv = repo.get_by_id(conversation_id)
     if not conv:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+    # Operators may only write while they hold the conversation (handover). Otherwise an
+    # operator reply could interleave with AI replies that are still being generated.
+    if conv.status != "HUMAN_ACTIVE":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Take control of the conversation before replying",
+        )
 
     # 1. Persist operator message
     msg = repo.add_message(
@@ -231,9 +242,11 @@ async def operator_reply(
     return {"ok": True, "message_id": str(msg.id)}
 
 
-@router.websocket("/ws")
+@websocket_router.websocket("/ws")
 async def websocket_operator_endpoint(websocket: WebSocket) -> None:
     """WebSocket endpoint for real-time operator notifications and chats."""
+    if not await authorize_operator_websocket(websocket):
+        return
     await connection_manager.connect(websocket)
     try:
         while True:

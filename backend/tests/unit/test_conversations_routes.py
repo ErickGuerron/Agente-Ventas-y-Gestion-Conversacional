@@ -3,6 +3,7 @@
 import uuid
 from unittest.mock import AsyncMock
 
+import pytest
 from fastapi.testclient import TestClient
 
 from main import app
@@ -11,6 +12,13 @@ from modules.channels.telegram_service import TelegramChannelService
 from shared.database.session import get_db_session
 
 MOCK_TOKEN = "123456789:AAE-mock-token-for-unit-testing"
+OPERATOR_KEY = "test-operator-key-0123456789"
+OPERATOR_HEADERS = {"X-Operator-Key": OPERATOR_KEY}
+
+
+@pytest.fixture(autouse=True)
+def _operator_key(monkeypatch):
+    monkeypatch.setenv("DASHBOARD_API_KEY", OPERATOR_KEY)
 
 
 class MockConversation:
@@ -84,7 +92,7 @@ def test_list_conversations():
     routes.ConversationRepository = lambda session: mock_repo
 
     try:
-        client = TestClient(app)
+        client = TestClient(app, headers=OPERATOR_HEADERS)
         res = client.get("/api/conversations")
         assert res.status_code == 200
         data = res.json()
@@ -107,7 +115,7 @@ def test_list_conversation_messages():
     routes.ConversationRepository = lambda session: mock_repo
 
     try:
-        client = TestClient(app)
+        client = TestClient(app, headers=OPERATOR_HEADERS)
         res = client.get("/api/conversations/11111111-1111-1111-1111-111111111111/messages")
         assert res.status_code == 200
         data = res.json()
@@ -130,7 +138,7 @@ def test_operator_takeover_and_resume():
     routes.ConversationRepository = lambda session: mock_repo
 
     try:
-        client = TestClient(app)
+        client = TestClient(app, headers=OPERATOR_HEADERS)
         # Takeover
         res = client.post("/api/conversations/11111111-1111-1111-1111-111111111111/takeover")
         assert res.status_code == 200
@@ -164,7 +172,8 @@ def test_operator_reply():
     routes.ConversationRepository = lambda session: mock_repo
 
     try:
-        client = TestClient(app)
+        mock_repo.conv.status = "HUMAN_ACTIVE"
+        client = TestClient(app, headers=OPERATOR_HEADERS)
         res = client.post(
             "/api/conversations/11111111-1111-1111-1111-111111111111/reply",
             json={"text": "Hola, soy el asesor humano. ¿En qué te ayudo?"},
@@ -181,9 +190,37 @@ def test_operator_reply():
         app.dependency_overrides.clear()
 
 
+def test_operator_reply_rejected_while_ai_is_active():
+    mock_session = MockSession()
+    mock_tg = TelegramChannelService(token=MOCK_TOKEN)
+    mock_tg.send_message = AsyncMock()
+
+    app.dependency_overrides[get_db_session] = lambda: mock_session
+    app.dependency_overrides[get_telegram_service] = lambda: mock_tg
+
+    from modules.conversations import routes
+
+    original_repo_cls = routes.ConversationRepository
+    mock_repo = MockRepo()
+    routes.ConversationRepository = lambda session: mock_repo
+
+    try:
+        client = TestClient(app, headers=OPERATOR_HEADERS)
+        res = client.post(
+            "/api/conversations/11111111-1111-1111-1111-111111111111/reply",
+            json={"text": "Esto no debe salir"},
+        )
+        assert res.status_code == 409
+        mock_tg.send_message.assert_not_awaited()
+        assert all(msg.sender_type != "operator" for msg in mock_repo.messages)
+    finally:
+        routes.ConversationRepository = original_repo_cls
+        app.dependency_overrides.clear()
+
+
 def test_websocket_ping_pong():
-    client = TestClient(app)
-    with client.websocket_connect("/api/conversations/ws") as websocket:
+    client = TestClient(app, headers=OPERATOR_HEADERS)
+    with client.websocket_connect(f"/api/conversations/ws?token={OPERATOR_KEY}") as websocket:
         websocket.send_text("ping")
         data = websocket.receive_text()
         assert data == "pong"
