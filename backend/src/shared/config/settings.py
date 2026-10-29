@@ -34,7 +34,8 @@ class Settings(BaseSettings):
     dashboard_allowed_origins: str = "http://localhost:8501"
 
     def allowed_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.dashboard_allowed_origins.split(",") if origin.strip()]
+        origins = self.dashboard_allowed_origins.split(",")
+        return [origin.strip() for origin in origins if origin.strip()]
 
 
 def get_settings() -> Settings:

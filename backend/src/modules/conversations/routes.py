@@ -43,6 +43,7 @@ def list_conversations(
     """List all active conversations with their latest message and status."""
     repo = ConversationRepository(session)
     conversations = repo.list_active_conversations()
+    leads = repo.latest_leads_by_conversation()
     output = []
     for conv in conversations:
         recent = repo.list_recent_messages(conv.id, limit=1)
@@ -54,6 +55,7 @@ def list_conversations(
                 "external_chat_id": conv.external_chat_id,
                 "status": conv.status,
                 "version": conv.version,
+                "lead_status": leads.get(str(conv.id)),
                 "created_at": conv.created_at.isoformat() if conv.created_at else None,
                 "last_message": last_msg.content if last_msg else None,
                 "last_sender_type": last_msg.sender_type if last_msg else None,
@@ -63,6 +65,26 @@ def list_conversations(
             }
         )
     return output
+
+
+@router.get("/{conversation_id}")
+def get_conversation(
+    conversation_id: str,
+    session: Annotated[Session, Depends(get_db_session)],
+) -> dict[str, Any]:
+    """One conversation with its AI/Human state and commercial thermometer."""
+    repo = ConversationRepository(session)
+    conv = repo.get_by_id(conversation_id)
+    if not conv:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+    return {
+        "id": str(conv.id),
+        "channel": conv.channel,
+        "external_chat_id": conv.external_chat_id,
+        "status": conv.status,
+        "version": conv.version,
+        "lead_status": repo.latest_leads_by_conversation().get(str(conv.id)),
+    }
 
 
 @router.get("/{conversation_id}/messages")

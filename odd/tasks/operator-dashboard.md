@@ -15,10 +15,10 @@ S8: Real-time updates over WebSocket for messages and status changes. Source: se
 ## Tasks
 T1 | S4, S5 | inline | [x] | RED: 5 failing (401/503/CORS) in test_operator_auth.py; GREEN: 64 unit passing
 T2 | S3 | inline | [x] | RED: test_operator_reply_rejected_while_ai_is_active failed (200 instead of 409); GREEN: guard added
-T3 | S2 (read endpoint GET /{id}) | inline | [ ] | RED: pending
-T4 | S6 (summary endpoint) | inline | [ ] | RED: pending
-T5 | S1, S2, S7, S8 (Streamlit dashboard UI) | inline | [ ] | RED: pending
-T6 | S8 (WebSocket auth + broadcast smoke) | inline | [ ] | RED: pending
+T3 | S1, S2 (GET /{id}, lead_status in list) | inline | [x] | RED: 2 failing (thermometer, detail); GREEN: 78 unit passing
+T4 | S6 (GET /api/analytics/summary) | inline | [x] | RED: pure aggregation (9 tests) and endpoint tests; GREEN: 84 unit passing
+T5 | S1, S2, S7 (Streamlit UI + api_client) | inline | [x] | RED: api_client tests (6); GREEN; UI verified with AppTest (no config, unreachable API)
+T6 | S8 (WebSocket) | inline | [~] | auth done in T1; real-time is polling 3 s/10 s in Streamlit, documented as a limit in README
 
 Route declaration: all inline. Trigger evidence: none fired (small units, under 100 changed lines each).
 
@@ -28,4 +28,8 @@ L2: Mapping (explorer) found: no auth on REST/WS; CORS wildcard with credentials
 L3: Decision: operator key via header X-Operator-Key for REST; WS uses ?token= query parameter because browsers cannot set headers on WebSocket. The key is never logged.
 L4: Errors found and fixed during T1: (a) aiogram was declared in requirements.txt but missing from the hackathon env; installed with requirements-dev.txt. (b) CORS allow_origins=* with allow_credentials=True; now an explicit allow-list from DASHBOARD_ALLOWED_ORIGINS, credentials off. (c) APIRouter(dependencies=...) also applies to WebSocket handshakes in FastAPI 0.162, so the WS now lives in its own router with ?token= auth.
 L5: Behavior change in T2: POST /reply now returns 409 unless the conversation is HUMAN_ACTIVE. test_operator_reply was updated to set HUMAN_ACTIVE, which is the handover flow from sec. 7.
-L6: Not yet done (next): T3 GET /api/conversations/{id}, T4 analytics summary, T5 Streamlit UI, T6 WS event shapes. The conversation list still lacks lead_status (termometer), which needs a read of conversation_analysis.
+L6: T3-T5 done. Lead thermometer comes from the latest conversation_analysis row per conversation.
+L7: Error found by AppTest: an unreachable API raised httpx.ConnectError and crashed the Streamlit script. Fixed in api_client (maps transport errors to OperatorApiError 503).
+L8: Lint: ruff check and ruff format are clean for the whole repo. pythonpath now includes dashboard/ for the client tests.
+L9: Deployment documented in README (API on HTTPS, dashboard on Streamlit Community Cloud, local run). .env.example was not updated because reading and editing .env* files is blocked by a permission rule in this environment.
+L10: Not verified end-to-end against PostgreSQL: integration tests need DATABASE_URL.

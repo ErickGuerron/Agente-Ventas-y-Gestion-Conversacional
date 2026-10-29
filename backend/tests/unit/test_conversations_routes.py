@@ -75,6 +75,9 @@ class MockRepo:
         self.messages.append(msg)
         return msg
 
+    def latest_leads_by_conversation(self):
+        return {str(self.conv.id): "LEAD_CALIENTE"}
+
 
 class MockSession:
     def commit(self):
@@ -213,6 +216,66 @@ def test_operator_reply_rejected_while_ai_is_active():
         assert res.status_code == 409
         mock_tg.send_message.assert_not_awaited()
         assert all(msg.sender_type != "operator" for msg in mock_repo.messages)
+    finally:
+        routes.ConversationRepository = original_repo_cls
+        app.dependency_overrides.clear()
+
+
+def test_list_conversations_includes_thermometer_status():
+    app.dependency_overrides[get_db_session] = lambda: MockSession()
+
+    from modules.conversations import routes
+
+    original_repo_cls = routes.ConversationRepository
+    routes.ConversationRepository = lambda session: MockRepo()
+
+    try:
+        client = TestClient(app, headers=OPERATOR_HEADERS)
+        data = client.get("/api/conversations").json()
+        assert data[0]["lead_status"] == "LEAD_CALIENTE"
+    finally:
+        routes.ConversationRepository = original_repo_cls
+        app.dependency_overrides.clear()
+
+
+def test_conversation_detail_returns_status_version_and_lead():
+    app.dependency_overrides[get_db_session] = lambda: MockSession()
+
+    from modules.conversations import routes
+
+    original_repo_cls = routes.ConversationRepository
+    routes.ConversationRepository = lambda session: MockRepo()
+
+    try:
+        client = TestClient(app, headers=OPERATOR_HEADERS)
+        res = client.get("/api/conversations/11111111-1111-1111-1111-111111111111")
+        assert res.status_code == 200
+        body = res.json()
+        assert body["id"] == "11111111-1111-1111-1111-111111111111"
+        assert body["status"] == "AI_ACTIVE"
+        assert body["version"] == 1
+        assert body["lead_status"] == "LEAD_CALIENTE"
+    finally:
+        routes.ConversationRepository = original_repo_cls
+        app.dependency_overrides.clear()
+
+
+def test_conversation_detail_unknown_id_is_404():
+    class _NoConversation(MockRepo):
+        def get_by_id(self, cid):
+            return None
+
+    app.dependency_overrides[get_db_session] = lambda: MockSession()
+
+    from modules.conversations import routes
+
+    original_repo_cls = routes.ConversationRepository
+    routes.ConversationRepository = lambda session: _NoConversation()
+
+    try:
+        client = TestClient(app, headers=OPERATOR_HEADERS)
+        res = client.get("/api/conversations/99999999-9999-9999-9999-999999999999")
+        assert res.status_code == 404
     finally:
         routes.ConversationRepository = original_repo_cls
         app.dependency_overrides.clear()

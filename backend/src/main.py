@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from modules.analytics.routes import router as analytics_router
 from modules.channels.routes import router as telegram_router
 from modules.conversations.routes import router as conversations_router
 from modules.conversations.routes import websocket_router as conversations_ws_router
@@ -23,6 +24,7 @@ app.add_middleware(
 app.include_router(telegram_router, prefix="/api/telegram", tags=["channels"])
 app.include_router(conversations_router, prefix="/api/conversations", tags=["conversations"])
 app.include_router(conversations_ws_router, prefix="/api/conversations")
+app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
 
 
 @app.get("/health")

@@ -4,15 +4,17 @@ Encapsulates all database interactions for the conversations bounded context.
 """
 
 import uuid
+from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from modules.conversations.models import (
     Conversation,
     ConversationAnalysis,
     ConversationEvent,
+    Job,
     Message,
 )
 
@@ -163,3 +165,34 @@ class ConversationRepository:
         """Fetch all active conversations for the dashboard view."""
         stmt = select(Conversation).order_by(Conversation.created_at.desc())
         return list(self.session.scalars(stmt).all())
+
+    def latest_leads_by_conversation(self) -> dict[str, str]:
+        """Latest commercial thermometer per conversation, keyed by conversation id string."""
+        stmt = (
+            select(Message.conversation_id, ConversationAnalysis.lead_status)
+            .join(ConversationAnalysis, ConversationAnalysis.message_id == Message.id)
+            .order_by(Message.created_at.asc(), ConversationAnalysis.created_at.asc())
+        )
+        latest: dict[str, str] = {}
+        for conversation_id, lead_status in self.session.execute(stmt).all():
+            latest[str(conversation_id)] = lead_status
+        return latest
+
+    def analysis_points(self) -> list[tuple[str, int, int]]:
+        """(intent, latency_ms, token_usage) for every analyzed message."""
+        stmt = select(
+            ConversationAnalysis.intent,
+            ConversationAnalysis.latency_ms,
+            ConversationAnalysis.token_usage,
+        )
+        return [tuple(row) for row in self.session.execute(stmt).all()]
+
+    def message_times_since(self, since: datetime) -> list[datetime]:
+        """Creation times of messages not older than ``since``."""
+        stmt = select(Message.created_at).where(Message.created_at >= since)
+        return list(self.session.scalars(stmt).all())
+
+    def failed_jobs_count(self) -> int:
+        """Jobs that exhausted their retries; the worker is the only writer of this status."""
+        stmt = select(func.count()).select_from(Job).where(Job.status == "FAILED")
+        return int(self.session.scalar(stmt) or 0)

@@ -15,6 +15,9 @@ class _EmptyRepo:
     def list_active_conversations(self):
         return []
 
+    def latest_leads_by_conversation(self):
+        return {}
+
 
 class _Session:
     def commit(self):
