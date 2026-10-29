@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     llm_provider: str = "fake"
     gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
     telegram_webhook_secret: str = ""
     telegram_bot_token: str = ""
     database_url: str = ""

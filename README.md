@@ -39,7 +39,6 @@ Reparto para trabajar en paralelo sin tocar los mismos archivos.
 python -m venv .venv
 .venv\Scripts\activate            # Windows
 pip install -r backend/requirements-dev.txt
-docker compose up -d              # PostgreSQL local (opcional, para integration)
 cp .env.example .env              # completar valores
 pytest -m "not integration and not live"   # unit
 pytest -m integration                      # requiere DATABASE_URL
