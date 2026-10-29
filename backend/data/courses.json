@@ -1,0 +1,22 @@
+[
+  {
+    "id": "python-basico",
+    "nombre": "Python desde Cero",
+    "modalidad": "Virtual",
+    "duracion_horas": 40,
+    "precio_usd": 80,
+    "descripcion": "Fundamentos de programación con Python",
+    "temas": ["Variables", "Funciones", "POO"],
+    "promociones_autorizadas": []
+  },
+  {
+    "id": "ia-intro",
+    "nombre": "Introducción a la IA",
+    "modalidad": "Virtual",
+    "duracion_horas": 60,
+    "precio_usd": 120,
+    "descripcion": "Conceptos y aplicaciones de IA",
+    "temas": ["Machine Learning", "LLM", "Agentes"],
+    "promociones_autorizadas": []
+  }
+]
