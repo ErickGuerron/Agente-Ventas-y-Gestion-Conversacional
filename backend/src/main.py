@@ -2,7 +2,11 @@
 
 from fastapi import FastAPI
 
+from modules.channels.routes import router as telegram_router
+
 app = FastAPI(title="Hackathon UTA bot")
+
+app.include_router(telegram_router, prefix="/api/telegram", tags=["channels"])
 
 
 @app.get("/health")
