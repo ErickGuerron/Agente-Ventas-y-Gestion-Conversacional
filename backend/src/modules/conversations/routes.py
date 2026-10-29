@@ -18,9 +18,13 @@ from modules.channels.routes import get_telegram_service
 from modules.channels.telegram_service import TelegramChannelService
 from modules.conversations.repository import ConversationRepository
 from shared.database.session import get_db_session
+from shared.security.operator_auth import authorize_operator_websocket, require_operator
 from shared.websocket.manager import connection_manager
 
-router = APIRouter()
+# HTTP routes require the operator header. The WebSocket has its own router because router-level
+# HTTP dependencies also apply to WebSocket handshakes, which carry the key as ?token= instead.
+router = APIRouter(dependencies=[Depends(require_operator)])
+websocket_router = APIRouter()
 
 
 class TransitionRequest(BaseModel):
@@ -39,6 +43,7 @@ def list_conversations(
     """List all active conversations with their latest message and status."""
     repo = ConversationRepository(session)
     conversations = repo.list_active_conversations()
+    leads = repo.latest_leads_by_conversation()
     output = []
     for conv in conversations:
         recent = repo.list_recent_messages(conv.id, limit=1)
@@ -50,6 +55,7 @@ def list_conversations(
                 "external_chat_id": conv.external_chat_id,
                 "status": conv.status,
                 "version": conv.version,
+                "lead_status": leads.get(str(conv.id)),
                 "created_at": conv.created_at.isoformat() if conv.created_at else None,
                 "last_message": last_msg.content if last_msg else None,
                 "last_sender_type": last_msg.sender_type if last_msg else None,
@@ -59,6 +65,26 @@ def list_conversations(
             }
         )
     return output
+
+
+@router.get("/{conversation_id}")
+def get_conversation(
+    conversation_id: str,
+    session: Annotated[Session, Depends(get_db_session)],
+) -> dict[str, Any]:
+    """One conversation with its AI/Human state and commercial thermometer."""
+    repo = ConversationRepository(session)
+    conv = repo.get_by_id(conversation_id)
+    if not conv:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+    return {
+        "id": str(conv.id),
+        "channel": conv.channel,
+        "external_chat_id": conv.external_chat_id,
+        "status": conv.status,
+        "version": conv.version,
+        "lead_status": repo.latest_leads_by_conversation().get(str(conv.id)),
+    }
 
 
 @router.get("/{conversation_id}/messages")
@@ -204,6 +230,13 @@ async def operator_reply(
     conv = repo.get_by_id(conversation_id)
     if not conv:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+    # Operators may only write while they hold the conversation (handover). Otherwise an
+    # operator reply could interleave with AI replies that are still being generated.
+    if conv.status != "HUMAN_ACTIVE":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Take control of the conversation before replying",
+        )
 
     # 1. Persist operator message
     msg = repo.add_message(
@@ -231,9 +264,11 @@ async def operator_reply(
     return {"ok": True, "message_id": str(msg.id)}
 
 
-@router.websocket("/ws")
+@websocket_router.websocket("/ws")
 async def websocket_operator_endpoint(websocket: WebSocket) -> None:
     """WebSocket endpoint for real-time operator notifications and chats."""
+    if not await authorize_operator_websocket(websocket):
+        return
     await connection_manager.connect(websocket)
     try:
         while True:
