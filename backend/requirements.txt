@@ -3,5 +3,7 @@ uvicorn>=0.30
 pydantic>=2.7
 pydantic-settings>=2.3
 google-genai>=1.0
+langgraph>=1.0
+langchain-core>=0.3
 sqlalchemy>=2.0
 psycopg[binary]>=3.2

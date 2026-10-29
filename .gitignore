@@ -5,6 +5,8 @@ __pycache__/
 venv/
 
 # Tooling
+node_modules/
+backend/evals/results/
 .pytest_cache/
 .ruff_cache/
 .coverage
@@ -20,3 +22,4 @@ htmlcov/
 Thumbs.db
 .vscode/
 .idea/
+./backend/evals/node_modules
