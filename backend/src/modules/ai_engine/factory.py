@@ -4,7 +4,6 @@ from typing import Any
 
 from langgraph.checkpoint.memory import InMemorySaver
 
-from modules.ai_engine.gemini_client import GeminiClient
 from modules.ai_engine.graph import build_graph
 from modules.ai_engine.ports import LLMClient
 from modules.courses.catalog import load_catalog
@@ -33,11 +32,13 @@ class EchoFallbackLLMClient:
 
 def get_llm_client() -> LLMClient:
     settings = get_settings()
-    if settings.llm_provider == "gemini" and settings.gemini_api_key:
-        return GeminiClient(
-            api_key=settings.gemini_api_key,
-            model=settings.gemini_model or "gemini-2.5-flash",
-        )
+    if settings.gemini_api_key or settings.minimax_api_key or settings.cursor_api_key:
+        try:
+            from modules.ai_engine.llm_factory import build_llm_client
+
+            return build_llm_client(settings)
+        except Exception:
+            pass
     return EchoFallbackLLMClient()
 
 
