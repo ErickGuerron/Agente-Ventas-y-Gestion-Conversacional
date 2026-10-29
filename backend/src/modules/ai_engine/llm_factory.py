@@ -22,6 +22,7 @@ class FallbackLLMClient:
 
 
 def build_llm_client(settings: Settings) -> LLMClient:
+
     """Chain of configured providers: Gemini, then MiniMax, then Cursor. Each one falls back to the next."""
     chain: list[LLMClient] = []
     if settings.gemini_api_key:
