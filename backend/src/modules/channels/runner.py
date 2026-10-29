@@ -32,6 +32,11 @@ async def main() -> None:
     @dp.message()
     async def handle_message(message: types.Message) -> None:
         if not message.text:
+            if message.voice or message.audio or message.video_note:
+                await message.reply(
+                    "Por el momento solo puedo responder a mensajes de texto. "
+                    "Por favor, escribe tu consulta y con gusto te asesoro."
+                )
             return
 
         chat_id = str(message.chat.id)
