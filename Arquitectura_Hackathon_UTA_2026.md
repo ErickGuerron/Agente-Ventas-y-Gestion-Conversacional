@@ -288,7 +288,9 @@ hackathon-uta-bot/
 
 **Separación hexagonal práctica:** contratos para `CourseRepository`, `ConversationRepository`, `LLMClient` y `ChannelSender`; implementar adaptadores JSON, PostgreSQL, Gemini y Telegram. No crear capas abstractas sin uso durante el MVP.
 
-## 12. Plan de implementación por prioridad
+## 12. Plan de implementación y división de trabajo (Equipo de 2)
+
+### 12.1 Matriz de prioridades del MVP
 
 | Prioridad | Implementación | Evidencia para jurado |
 |---|---|---|
@@ -301,6 +303,62 @@ hackathon-uta-bot/
 | P1 | Memoria conversacional | Reconoce preferencias ya mencionadas |
 | P1 | KPIs e intención del prospecto | Termómetro y métricas en vivo |
 | P2 | Resumen para operador o audio | Valor agregado si queda tiempo |
+
+### 12.2 Perfiles y contrato de desacoplamiento (Minuto cero)
+
+Para evitar bloqueos y permitir desarrollo 100% paralelo, se divide el equipo en dos frentes con un contrato de interfaz explícito acordado en los primeros 30 minutos:
+
+- **Dev 1: Backend, Telegram, Persistencia & Handover ("Infraestructura, Concurrencia y Canales")**
+- **Dev 2: Motor de IA, LangGraph, Catálogo & Métricas ("Lógica Cognitiva, Prompts y Visualización")**
+
+#### Contrato de interfaz (`ai_engine/contract.py`):
+
+```python
+from pydantic import BaseModel
+
+class AIResult(BaseModel):
+    response_text: str
+    intent: str               # "ACADEMICO", "COMERCIAL", "FRUSTRACION"
+    lead_status: str          # "INTERESADO", "DUDOSO", "FRUSTRADO", "LEAD_CALIENTE"
+    requires_human: bool      # True si la IA solicita escalación humana
+    tokens_used: int
+
+async def process_chat_turn(conversation_id: str, message: str, history: list) -> AIResult:
+    """Dev 2 implementa el grafo real; Dev 1 usa un mock determinista para avanzar."""
+    ...
+```
+
+### 12.3 Plan de trabajo sincronizado por fases
+
+```text
+FASE 1 (Horas 1 - 3): Setup y Conectores Base
+  ├── Dev 1: FastAPI + aiogram (Telegram) + Migraciones Supabase (7 tablas)
+  └── Dev 2: courses.json + Config Gemini langchain + Prompt anti-descuentos
+
+FASE 2 (Horas 3 - 7): Core Crítico (Handover vs LangGraph)
+  ├── Dev 1: Máquina de estados (AI_ACTIVE/HUMAN_ACTIVE) + WebSockets + UI Operador
+  └── Dev 2: Grafo LangGraph (Supervisor, Académico, Comercial) + InMemorySaver
+
+FASE 3 (Horas 7 - 10): Integración y Analítica
+  ├── Dev 1: Conexión FastAPI con grafo real + Validación de carrera al responder
+  └── Dev 2: Dashboard Streamlit (Plotly) conectado a Supabase (KPIs e intenciones)
+
+FASE 4 (Horas Finales): Hardening, Demo Script y Pitch
+  ├── Dev 1: Pruebas de carga, túnel HTTPS (Cloudflare/ngrok) y CORS
+  └── Dev 2: Ensayos de prompt injection, simulación de frustración y métricas
+```
+
+### 12.4 Matriz de entregables y responsabilidades
+
+| Entregable | Responsable | Justificación y Rúbrica |
+|---|:---:|---|
+| Bot de Telegram + Webhook FastAPI | **Dev 1** | Canal de entrada/salida operativo (P0) |
+| Esquema y persistencia en Supabase | **Dev 1** | Fuente de verdad de conversaciones (P0) |
+| Máquina de handover atómica y UI Operador | **Dev 1** | Vital para Panel web e intervención humana (30 pts) |
+| Catálogo `courses.json` & Guardrails | **Dev 2** | Protección de precios y pénsum oficial (P0) |
+| Grafo LangGraph (Académico + Comercial) | **Dev 2** | Comportamiento y lógica del agente (30 pts) |
+| Dashboard Streamlit (KPIs y métricas) | **Dev 2** | Innovación, analítica y sustentación (20 pts) |
+| Guion de Demo para jurado | **Ambos** | Garantiza ejecución sin errores durante la defensa |
 
 **Orden operativo recomendado:** primero el flujo completo Telegram → IA → Telegram; después persistencia y handover; luego dashboard y métricas; finalmente mejoras multiagente y extras. Reservar un período final para probar el despliegue, la URL del dashboard y los accesos externos.
 
