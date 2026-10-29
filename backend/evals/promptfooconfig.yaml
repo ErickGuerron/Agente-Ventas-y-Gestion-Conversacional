@@ -1,6 +1,6 @@
 # Behavioural evals for the sales bot (architecture sections 1, 6 and 10).
 # Run through pytest: backend/tests/live/test_promptfoo_eval.py (marker "live").
-# Uses Gemini with EVAL_GEMINI_MODEL (default gemini-2.5-flash), set by the pytest wrapper.
+# Uses Gemini with EVAL_GEMINI_MODEL (default gemini-3.5-flash-lite), set by the pytest wrapper.
 # Assertions are deterministic on purpose: no LLM-as-judge, so each case costs one bot call.
 # Requires a Node.js install (npm ci in backend/evals).
 

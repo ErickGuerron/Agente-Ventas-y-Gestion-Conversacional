@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     cursor_api_key: str = ""
     cursor_model: str = ""
 
+    # Optional MiniMax provider (OpenAI-compatible). Joins the chain after Gemini.
+    minimax_api_key: str = ""
+    minimax_model: str = "MiniMax-M3.1-Flash"
+
     telegram_webhook_secret: str = ""
     telegram_bot_token: str = ""
     database_url: str = ""

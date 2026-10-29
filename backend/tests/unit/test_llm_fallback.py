@@ -152,7 +152,9 @@ def test_cursor_run_that_never_finishes_times_out_as_unavailable() -> None:
 
 
 def test_factory_without_cursor_key_uses_only_gemini() -> None:
-    settings = Settings(gemini_api_key="gem-key", cursor_api_key="", _env_file=None)
+    settings = Settings(
+        gemini_api_key="gem-key", cursor_api_key="", minimax_api_key="", _env_file=None
+    )
 
     assert isinstance(build_llm_client(settings), GeminiClient)
 
@@ -164,7 +166,7 @@ def test_factory_with_both_keys_builds_fallback_chain() -> None:
 
 
 def test_factory_without_any_key_fails_fast() -> None:
-    settings = Settings(gemini_api_key="", cursor_api_key="", _env_file=None)
+    settings = Settings(gemini_api_key="", cursor_api_key="", minimax_api_key="", _env_file=None)
 
     with pytest.raises(ValueError, match="GEMINI_API_KEY"):
         build_llm_client(settings)
