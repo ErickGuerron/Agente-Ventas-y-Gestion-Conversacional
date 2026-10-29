@@ -11,9 +11,14 @@ ENV_FILES = (REPO_ROOT / ".env", REPO_ROOT / "backend" / ".env")
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILES, extra="ignore")
 
-    llm_provider: str = "fake"
+    # Primary LLM. Used alone when CURSOR_API_KEY is empty.
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.5-flash"
+
+    # Optional fallback LLM (Cursor Cloud Agents). Used only when Gemini is unavailable.
+    cursor_api_key: str = ""
+    cursor_model: str = ""
+
     telegram_webhook_secret: str = ""
     telegram_bot_token: str = ""
     database_url: str = ""

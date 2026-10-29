@@ -15,8 +15,8 @@ if str(BACKEND_SRC) not in sys.path:
 
 from langchain_core.messages import HumanMessage  # noqa: E402
 
-from modules.ai_engine.gemini_client import GeminiClient  # noqa: E402
 from modules.ai_engine.graph import build_graph  # noqa: E402
+from modules.ai_engine.llm_factory import build_llm_client  # noqa: E402
 from modules.courses.catalog import load_catalog  # noqa: E402
 from shared.config.settings import get_settings  # noqa: E402
 
@@ -26,9 +26,7 @@ _GRAPH = None
 def _graph():
     global _GRAPH
     if _GRAPH is None:
-        settings = get_settings()
-        llm = GeminiClient(api_key=settings.gemini_api_key, model=settings.gemini_model)
-        _GRAPH = build_graph(llm, load_catalog())
+        _GRAPH = build_graph(build_llm_client(get_settings()), load_catalog())
     return _GRAPH
 
 
