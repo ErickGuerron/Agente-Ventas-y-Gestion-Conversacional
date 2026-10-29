@@ -1,10 +1,15 @@
-"""Application settings loaded from environment variables (and .env locally)."""
+"""Application settings loaded from environment variables (and a local .env file)."""
+
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+REPO_ROOT = Path(__file__).resolve().parents[4]
+ENV_FILES = (REPO_ROOT / ".env", REPO_ROOT / "backend" / ".env")
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=ENV_FILES, extra="ignore")
 
     llm_provider: str = "fake"
     gemini_api_key: str = ""

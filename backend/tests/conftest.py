@@ -1,6 +1,6 @@
-import os
-
 import pytest
+
+from shared.config.settings import get_settings
 
 
 class FakeLLMClient:
@@ -22,7 +22,7 @@ def fake_llm() -> FakeLLMClient:
 
 @pytest.fixture
 def database_url() -> str:
-    url = os.environ.get("DATABASE_URL", "")
+    url = get_settings().database_url
     if not url:
-        pytest.skip("DATABASE_URL not set")
+        pytest.skip("DATABASE_URL not set (env or backend/.env)")
     return url

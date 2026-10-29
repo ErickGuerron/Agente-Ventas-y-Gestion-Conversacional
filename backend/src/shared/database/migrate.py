@@ -12,7 +12,6 @@ Usage (from the repository root)::
 from __future__ import annotations
 
 import hashlib
-import os
 import re
 import sys
 from dataclasses import dataclass
@@ -20,6 +19,7 @@ from pathlib import Path
 
 from sqlalchemy import Engine, text
 
+from shared.config.settings import get_settings
 from shared.database.engine import make_engine
 
 MIGRATIONS_DIR = Path(__file__).resolve().parents[3] / "migrations"
@@ -101,7 +101,7 @@ def migrate(engine: Engine, migrations: list[Migration] | None = None) -> list[s
 
 
 def main() -> int:
-    engine = make_engine(os.environ.get("DATABASE_URL", ""))
+    engine = make_engine(get_settings().database_url)
     applied = migrate(engine)
     if applied:
         print("applied: " + ", ".join(applied))
