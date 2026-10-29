@@ -5,7 +5,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, types
 from sqlalchemy.orm import Session
 
-from modules.ai_engine.factory import get_llm_client
+from modules.ai_engine.factory import get_llm_client, get_sales_graph
 from modules.channels.dto import IncomingMessage
 from modules.channels.telegram_service import TelegramChannelService
 from modules.conversations.repository import ConversationRepository
@@ -27,6 +27,7 @@ async def main() -> None:
     engine = get_engine()
     service = TelegramChannelService(bot=bot)
     llm = get_llm_client()
+    graph = get_sales_graph(llm=llm)
 
     @dp.message()
     async def handle_message(message: types.Message) -> None:
@@ -51,7 +52,7 @@ async def main() -> None:
             repo = ConversationRepository(session)
             sender_info = f"{incoming.sender_name} ({incoming.external_chat_id})"
             print(f"[TG IN] From {sender_info}: {incoming.text}")
-            reply = await service.process_incoming_message(incoming, repo, llm)
+            reply = await service.process_incoming_message(incoming, repo, llm=llm, graph=graph)
             session.commit()
             if reply:
                 print(f"[TG OUT] Sent reply: {reply}")

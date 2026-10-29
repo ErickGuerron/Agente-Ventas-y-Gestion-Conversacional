@@ -1,22 +1,80 @@
 [
   {
-    "id": "python-basico",
-    "nombre": "Python desde Cero",
-    "modalidad": "Virtual",
-    "duracion_horas": 40,
-    "precio_usd": 80,
-    "descripcion": "Fundamentos de programación con Python",
-    "temas": ["Variables", "Funciones", "POO"],
+    "id": "python-fundamentos-1",
+    "nombre": "Fundamentos de Python 1 (Python desde Cero - Certified Entry-Level Python Programmer)",
+    "modalidad": "Virtual autodidacta (Self-paced)",
+    "duracion_horas": 32,
+    "precio_usd": 60.0,
+    "descripcion": "Curso oficial del CTT-FISEI para aprender a programar en Python desde cero y prepararse para la certificación PCEP. Horario libre con actividades y evaluaciones en línea. Precios oficiales: Estudiantes UTA $40, Graduados/Docentes/Administrativos UTA $50, Público general $60.",
+    "temas": [
+      "Variables y tipos de datos",
+      "Estructuras de control y bucles",
+      "Listas, tuplas y diccionarios",
+      "Funciones y modularidad",
+      "Introducción a excepciones"
+    ],
     "promociones_autorizadas": []
   },
   {
-    "id": "ia-intro",
-    "nombre": "Introducción a la IA",
-    "modalidad": "Virtual",
-    "duracion_horas": 60,
-    "precio_usd": 120,
-    "descripcion": "Conceptos y aplicaciones de IA",
-    "temas": ["Machine Learning", "LLM", "Agentes"],
+    "id": "python-fundamentos-2",
+    "nombre": "Fundamentos de Python 2 (Certified Associate Python Programmer)",
+    "modalidad": "Virtual autodidacta (Self-paced)",
+    "duracion_horas": 40,
+    "precio_usd": 60.0,
+    "descripcion": "Continuación en el CTT-FISEI para preparación de la certificación PCAP de Python Institute. Programación orientada a objetos y paquetes. Modalidad virtual autodidacta. Precios oficiales: Estudiantes UTA $40, Graduados/Docentes/Administrativos UTA $50, Público general $60.",
+    "temas": [
+      "Módulos y paquetes",
+      "Manejo avanzado de excepciones",
+      "Programación Orientada a Objetos (POO)",
+      "Procesamiento de cadenas y archivos",
+      "Generadores e iteradores"
+    ],
+    "promociones_autorizadas": []
+  },
+  {
+    "id": "ccna-introduccion-redes",
+    "nombre": "CCNA: Introducción a las Redes (Preparación Cisco Certified Network Associate)",
+    "modalidad": "Híbrida (Viernes virtual 19:00-21:00 y Sábados presencial 08:00-13:00)",
+    "duracion_horas": 70,
+    "precio_usd": 180.0,
+    "descripcion": "Capacitación oficial en el CTT-FISEI con laboratorios de redes Cisco. Sesiones virtuales viernes 19:00-21:00 y presenciales sábados 08:00-13:00 en laboratorios FISEI. Precios oficiales: Estudiantes UTA $120, Graduados/Docentes/Administrativos UTA $150, Público general $180.",
+    "temas": [
+      "Arquitecturas de red",
+      "Modelos OSI y TCP/IP",
+      "Configuración de switches y routers Cisco",
+      "Direccionamiento IPv4 e IPv6",
+      "Subredes y seguridad básica"
+    ],
+    "promociones_autorizadas": []
+  },
+  {
+    "id": "ia-gestion-rrhh",
+    "nombre": "Inteligencia Artificial para la Gestión de Recursos Humanos",
+    "modalidad": "Virtual (Miércoles y Jueves 19:00 - 22:00)",
+    "duracion_horas": 32,
+    "precio_usd": 80.0,
+    "descripcion": "Uso de herramientas y modelos de Inteligencia Artificial aplicados a la selección, reclutamiento y gestión de talento humano en CTT-FISEI. Modalidad virtual miércoles y jueves 19:00 a 22:00. Precios oficiales: Estudiantes UTA $40, Graduados/Docentes/Administrativos UTA $60, Público general $80.",
+    "temas": [
+      "Fundamentos de IA generativa y LLMs",
+      "Automatización de filtrado curricular",
+      "Evaluación de competencias con IA",
+      "Herramientas de productividad y ética en RRHH"
+    ],
+    "promociones_autorizadas": []
+  },
+  {
+    "id": "conceptos-basicos-redes",
+    "nombre": "Conceptos Básicos de Redes",
+    "modalidad": "Presencial",
+    "duracion_horas": 32,
+    "precio_usd": 50.0,
+    "descripcion": "Fundamentos y principios de conectividad y redes de datos para principiantes en la FISEI. Precios oficiales: Estudiantes UTA $30, Graduados/Docentes/Administrativos UTA $40, Público general $50.",
+    "temas": [
+      "Topologías de red",
+      "Cables y medios de transmisión",
+      "Protocolos básicos",
+      "Configuración LAN básica"
+    ],
     "promociones_autorizadas": []
   }
 ]

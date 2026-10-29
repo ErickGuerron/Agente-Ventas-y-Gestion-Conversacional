@@ -54,6 +54,6 @@ async def telegram_webhook(
 
     # 4. Process and dispatch message
     repo = ConversationRepository(session)
-    reply = await service.process_incoming_message(incoming, repo, llm)
+    reply = await service.process_incoming_message(incoming, repo, llm=llm)
 
     return {"ok": True, "reply_generated": bool(reply)}
