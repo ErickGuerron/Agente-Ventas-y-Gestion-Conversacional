@@ -13,6 +13,7 @@ from modules.ai_engine.factory import get_sales_graph
 from modules.ai_engine.ports import LLMClient
 from modules.channels.dto import IncomingMessage
 from modules.conversations.repository import ConversationRepository
+from shared.websocket.manager import connection_manager
 
 
 class TelegramChannelService:
@@ -104,6 +105,26 @@ class TelegramChannelService:
             content=incoming.text,
             external_message_id=incoming.external_message_id or None,
         )
+        # Commit incoming user message immediately to release row/index locks before LLM call
+        if hasattr(repo, "session") and hasattr(repo.session, "commit"):
+            try:
+                repo.session.commit()
+            except Exception:
+                pass
+
+        try:
+            await connection_manager.broadcast(
+                {
+                    "event": "message_received",
+                    "conversation_id": str(conv.id),
+                    "sender_type": "user",
+                    "content": incoming.text,
+                    "channel": incoming.channel,
+                    "external_chat_id": incoming.external_chat_id,
+                }
+            )
+        except Exception:
+            pass
 
         if conv.status != "AI_ACTIVE":
             return None
@@ -163,7 +184,25 @@ class TelegramChannelService:
                 sender_type="ai",
                 content=reply_text,
             )
+            if hasattr(repo, "session") and hasattr(repo.session, "commit"):
+                try:
+                    repo.session.commit()
+                except Exception:
+                    pass
             await self.send_message(incoming.external_chat_id, reply_text)
+            try:
+                await connection_manager.broadcast(
+                    {
+                        "event": "handover_alert",
+                        "conversation_id": str(conv.id),
+                        "reason": "frustration_detected",
+                        "lead_status": lead_status,
+                        "intent": intent,
+                        "content": reply_text,
+                    }
+                )
+            except Exception:
+                pass
             return reply_text
 
         # Race condition check: verify if an operator took control while LLM was processing
@@ -190,5 +229,21 @@ class TelegramChannelService:
             sender_type="ai",
             content=reply_text,
         )
+        if hasattr(repo, "session") and hasattr(repo.session, "commit"):
+            try:
+                repo.session.commit()
+            except Exception:
+                pass
         await self.send_message(incoming.external_chat_id, reply_text)
+        try:
+            await connection_manager.broadcast(
+                {
+                    "event": "message_sent",
+                    "conversation_id": str(conv.id),
+                    "sender_type": "ai",
+                    "content": reply_text,
+                }
+            )
+        except Exception:
+            pass
         return reply_text
