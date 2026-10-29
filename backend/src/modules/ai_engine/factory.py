@@ -34,7 +34,10 @@ class EchoFallbackLLMClient:
 def get_llm_client() -> LLMClient:
     settings = get_settings()
     if settings.llm_provider == "gemini" and settings.gemini_api_key:
-        return GeminiClient(api_key=settings.gemini_api_key, model="gemini-1.5-flash")
+        return GeminiClient(
+            api_key=settings.gemini_api_key,
+            model=settings.gemini_model or "gemini-2.5-flash",
+        )
     return EchoFallbackLLMClient()
 
 
